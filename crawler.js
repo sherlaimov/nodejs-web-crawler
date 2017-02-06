@@ -14,7 +14,7 @@ const fs = require('fs');
 //  var START_URL = "http://kayako-development.com";
 //  var START_URL = "http://gram.com.ua";
 let START_URL = "http://www.mrcplast.com/";
-const MAX_PAGES_TO_VISIT = 2;
+const MAX_PAGES_TO_VISIT = 10;
 
 const pagesVisited = [];
 let numPagesVisited = 0;
@@ -26,69 +26,95 @@ pagesToVisit.push(baseUrl);
 // crawl();
 
 const output = [];
+
 function collectStats(pagesVisited) {
- for (let i = 0; i < 5; i++) {
-     iterate();
- }
-    function iterate(){
-        let infoObj = {};
+    for (let i = 0; i < 5; i++) {
+        iterate();
+        console.log(`ITERATION NUMBER ${i}`);
+    }
+    function iterate() {
         let pageStats = {};
-        pagesVisited.map((page) => {
+        // console.log(url);
+        // console.log(output.indexOf(url) === -1);
+
+        // let url;
+        pagesVisited.forEach((page) => {
+            let infoObj = {};
             console.log(`Collecting stats for page ${page.url}`);
             const d = new Date();
             const before = d.getTime();
 
-            let url = page.url;
-
-            infoObj[url] = [];
-
             request(page.url, function (error, response, body) {
-                // Check status code (200 is HTTP OK)
-                //fs.writeFile(`response.txt`, JSON.stringify(response));
                 if (error) {
                     console.log(error);
                     console.log(`An error has occurred \n code: ${error.code}`);
                     return;
                 }
-
                 console.log("Status code: " + response.statusCode);
-
                 if (response.statusCode !== 200) {
                     return;
                 }
 
-
                 if (body) {
-                    //console.log(`Bytes loaded ${body.length}`.bgYellow);
-                    //return;
+                    console.log(page.url.toString().toUpperCase());
                     let reqTime = new Date().getTime() - before;
-                    infoObj[url].push({time: reqTime, size: body.length});
-                    //pageStats.time = reqTime;
-                    //pageStats.size = body.length;
+                    // infoObj[url].push({time: reqTime, size: body.length});
+                    infoObj.url = page.url;
+                    infoObj.time = reqTime;
+                    infoObj.size = body.length;
+                    //PRINT THIS FOR DMITRY - It is already an object with 2 keys
+                    // console.log(infoObj);
+                    output.push(infoObj);
+
+                    // pageStats.time = reqTime;
+                    // pageStats.size = body.length;
                     //infoObj[url].size = body.length;
                     //console.log('REQUEST TIME'.bgRed);
 
                 }
             });
+
         })
 
-        if (infoObj[url] !== undefined) {
-            //infoObj[url].push(pageStats);
-            //console.log("SHOULD WORK TWICE");
-            //console.log(infoObj);
-        }
-        //console.log(url in infoObj);
-        output.push(infoObj);
-        //console.log(before);
-        //console.log(reqTime.toString().bgGreen);
-        console.log('************** => OUTPUT <= *********************');
-
-        setTimeout(() => {
-            console.log(JSON.stringify(output, null, 2));
-        }, 3500);
     }
 
+    setTimeout(() => {
+        //const sorted = output.reduce((targetObj, currObj, index, array) => {
+        //
+        //}, {});
 
+        const found = [];
+        const sorted = output.map(function(page, i) {
+                let newObj = {};
+                newObj.time = [];
+                newObj.size = [];
+                for (let i = 0; i < output.length; i++) {
+                    if (page.url === output[i].url) {
+                        newObj.url = page.url;
+                        newObj.time.push(output[i].time)
+                        newObj.size.push(output[i].size);
+                    }
+
+                }
+                return newObj;
+            })
+            .filter(function(page, i, arr) {
+                for (let i = 0; i < arr.length; i++){
+                    if (page.url == arr[i].url && ! found.includes(arr[i].url)) {
+                        found.push(page.url);
+                        return page;
+                    }
+                }
+
+            })
+
+        // console.log("SORTED");
+        // console.log(JSON.stringify(sorted, null, 2));
+        // console.log(`Length of sorted array ${sorted.length}`);
+
+        console.log('************** => OUTPUT <= *********************');
+        console.log(JSON.stringify(sorted, null, 2));
+    }, 3500);
 
 }
 
