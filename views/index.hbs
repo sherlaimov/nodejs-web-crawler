@@ -1,0 +1,30 @@
+<!--<h1>{{ title }}</h1>-->
+
+<!--<p>Welcome to {{title}} </p>-->
+
+{{# if condition }}
+
+    <div>Condition met</div>
+
+{{ else }}
+
+    <p>condition not met</p>
+
+{{/if}}
+<ul>
+    <!--{{# each anyArray as |val key| }}-->
+
+       <!--<li>{{ key }} => {{ val }}</li>-->
+
+    <!--{{/each}}-->
+
+    {{# each data as |val key| }}
+
+        <li>{{ val.url }} {{ val.time }} {{val.size}}</li>
+
+    {{/each}}
+
+        {{{ test }}}
+        {{{error}}}
+
+</ul>

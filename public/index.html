@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Crawer</title>
+    <link rel="stylesheet" href="./stylesheets/bootstrap.min.css">
+    <link rel="stylesheet" href="./stylesheets/style.css">
+</head>
+<body>
+<div class="container">
+
+    <div class="row">
+        <h1>Basic website crawler</h1>
+
+        <!--action="/data"-->
+        <form class="form-horizontal" method="GET" id="urlForm">
+            <div class="input-group col-md-8">
+                <input class="form-control input-lg" name="url" id="urlInput" autofocus
+                       placeholder="Enter a website URL to crawl">
+               <span class="input-group-btn">
+            <button type="submit" class="btn btn-default btn-lg">Crawl</button>
+            </span>
+            </div>
+        </form>
+        <br>
+    </div>
+    <div class="row">
+        <div id="table">
+            <h1>Site response stats</h1>
+        </div>
+    </div>
+
+    <script id="table-template" type="text/x-handlebars-template">
+        <table class="table table-striped">
+            <thead>
+            <th>#</th>
+            <th>URL</th>
+            <th>TIME</th>
+            <th>SIZE</th>
+            </thead>
+            {{#each this}}
+            <tr>
+                <td>{{@index}}</td>
+                <td><a href="{{url}}" target="_blank">{{url}} </a></td>
+                <td>{{time}}</td>
+                <td>{{size}}</td>
+            </tr>
+            {{/each}}
+        </table>
+    </script>
+
+    <div class="bs-example" data-example-id="simple-table">
+        <table class="table .table-striped">
+            <caption>Optional table caption.</caption>
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Username</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <th scope="row">1</th>
+                <td>Mark</td>
+                <td>Otto</td>
+                <td>@mdo</td>
+            </tr>
+
+            </tbody>
+        </table>
+    </div>
+</div>
+<script src="./javascripts/jquery.min.js"></script>
+<script src="./javascripts/handlebars.min.js"></script>
+<script src="./javascripts/bootstrap.min.js"></script>
+<script src="./javascripts/main.js"></script>
+</body>
+</html>
