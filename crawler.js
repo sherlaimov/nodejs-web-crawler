@@ -8,13 +8,14 @@ const cheerio = require('cheerio');
 const URL = require('url-parse');
 const colors = require('colors');
 const fs = require('fs');
+const PubSub = require('./emitter');
+const statsCollector = require('./stats-collector');
 
-//CHANGE THE URL
 // var START_URL = "http://www.arstechnica.com";
-//  var START_URL = "http://kayako-development.com";
+ var START_URL = "http://kayako-development.com";
 //  var START_URL = "http://gram.com.ua";
-let START_URL = "http://www.mrcplast.com/";
-const MAX_PAGES_TO_VISIT = 10;
+// let START_URL = "http://www.mrcplast.com/";
+const MAX_PAGES_TO_VISIT = 20;
 
 const pagesVisited = [];
 let numPagesVisited = 0;
@@ -29,54 +30,11 @@ const output = [];
 
 function collectStats(pagesVisited) {
     for (let i = 0; i < 5; i++) {
-        iterate();
+        iterate(pagesVisited);
         console.log(`ITERATION NUMBER ${i}`);
     }
-    function iterate() {
-        let pageStats = {};
-        // console.log(url);
-        // console.log(output.indexOf(url) === -1);
 
-        // let url;
-        pagesVisited.forEach((page) => {
-            let infoObj = {};
-            console.log(`Collecting stats for page ${page.url}`);
-            const d = new Date();
-            const before = d.getTime();
-
-            request(page.url, function (error, response, body) {
-                if (error) {
-                    console.log(error);
-                    console.log(`An error has occurred \n code: ${error.code}`);
-                    return;
-                }
-                console.log("Status code: " + response.statusCode);
-                if (response.statusCode !== 200) {
-                    return;
-                }
-
-                if (body) {
-                    console.log(page.url.toString().toUpperCase());
-                    let reqTime = new Date().getTime() - before;
-                    // infoObj[url].push({time: reqTime, size: body.length});
-                    infoObj.url = page.url;
-                    infoObj.time = reqTime;
-                    infoObj.size = body.length;
-                    //PRINT THIS FOR DMITRY - It is already an object with 2 keys
-                    // console.log(infoObj);
-                    output.push(infoObj);
-
-                    // pageStats.time = reqTime;
-                    // pageStats.size = body.length;
-                    //infoObj[url].size = body.length;
-                    //console.log('REQUEST TIME'.bgRed);
-
-                }
-            });
-
-        })
-
-    }
+    output.length = 0;
 
     setTimeout(() => {
         //const sorted = output.reduce((targetObj, currObj, index, array) => {
@@ -91,16 +49,16 @@ function collectStats(pagesVisited) {
                 for (let i = 0; i < output.length; i++) {
                     if (page.url === output[i].url) {
                         newObj.url = page.url;
-                        newObj.time.push(output[i].time)
+                        newObj.time.push(output[i].time);
                         newObj.size.push(output[i].size);
                     }
-
                 }
                 return newObj;
             })
             .filter(function(page, i, arr) {
                 for (let i = 0; i < arr.length; i++){
-                    if (page.url == arr[i].url && ! found.includes(arr[i].url)) {
+                    // if (page.url == arr[i].url && ! found.includes(arr[i].url)) {
+                    if (page.url == arr[i].url && found.indexOf(arr[i].url) == -1) {
                         found.push(page.url);
                         return page;
                     }
@@ -112,11 +70,60 @@ function collectStats(pagesVisited) {
         // console.log(JSON.stringify(sorted, null, 2));
         // console.log(`Length of sorted array ${sorted.length}`);
 
-        console.log('************** => OUTPUT <= *********************');
-        console.log(JSON.stringify(sorted, null, 2));
+         console.log('************** => OUTPUT <= *********************');
+         console.log(JSON.stringify(sorted, null, 2));
     }, 3500);
 
 }
+
+function iterate(pagesVisited) {
+    let pageStats = {};
+    // console.log(url);
+    // console.log(output.indexOf(url) === -1);
+
+    // let url;
+    pagesVisited.forEach((page) => {
+        let infoObj = {};
+        // console.log(`Collecting stats for page ${page.url}`);
+        const d = new Date();
+        const before = d.getTime();
+
+        request(page.url, function (error, response, body) {
+            if (error) {
+                console.log(error);
+                console.log(`An error has occurred \n code: ${error.code}`);
+                return;
+            }
+            // console.log("Status code: " + response.statusCode);
+            if (response.statusCode !== 200) {
+                return;
+            }
+
+            if (body) {
+                // console.log(page.url.toString().toUpperCase());
+                let reqTime = new Date().getTime() - before;
+                // infoObj[url].push({time: reqTime, size: body.length});
+                infoObj.url = page.url;
+                infoObj.time = reqTime;
+                infoObj.size = body.length;
+                //PRINT THIS FOR DMITRY - It is already an object with 2 keys
+                // console.log(infoObj);
+                output.push(infoObj);
+
+                // pageStats.time = reqTime;
+                // pageStats.size = body.length;
+                //infoObj[url].size = body.length;
+                //console.log('REQUEST TIME'.bgRed);
+
+            }
+        });
+
+    })
+
+}
+
+
+
 
 function crawl(options) {
     let opts = options || {};
@@ -126,8 +133,6 @@ function crawl(options) {
     }
 
     if (opts.url) {
-        console.log("INSIDE opts.url in CRAWLER");
-        //console.log(opts.url);
         START_URL = opts.url;
         url = new URL(START_URL);
         baseUrl = url.protocol + '//' + url.hostname;
@@ -144,8 +149,9 @@ function crawl(options) {
         console.log("Reached max limit of number of pages to visit.");
         console.log(`Total of visited pages ${pagesVisited.length}`);
         console.log('Starting stats collection...');
-        collectStats(pagesVisited);
-
+        PubSub.emit('blah');
+        PubSub.emit('data-received', pagesVisited);
+        //collectStats(pagesVisited);
         return;
     }
 
@@ -193,6 +199,7 @@ function visitPage(url, callback) {
     const before = d.getTime();
     // Make the request
     console.log(`Visiting page ${url}`);
+    PubSub.emit('page', url);
     request(url, function (error, response, body) {
         // Check status code (200 is HTTP OK)
         //fs.writeFile(`response.txt`, JSON.stringify(response));

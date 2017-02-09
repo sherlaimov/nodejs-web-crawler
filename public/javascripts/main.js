@@ -23,45 +23,38 @@
             self.elem = elem;
             self.$elem = $(elem);
             self.template = Handlebars.compile($('#table-template').html());
-
+            self.$modal = $('#statsModal');
             self.form = $('#urlForm');
             self.form.on("submit", (e) => {
                 e.preventDefault();
-                //console.log(self.form.serialize());
-                self.fetch({
-                    url: self.url + 'crawl/',
-                    data: self.form.serialize()
-                })
-                    .done(data => self.render(data))
-                    .fail((e) => {
-                        console.log(e);
-                        console.log('Query failed');
+                if (document.querySelector('#urlInput').value) {
+                    self.fetch({
+                        url: self.url + 'crawl/',
+                        data: self.form.serialize()
                     })
+                        .done(data => self.render(data))
+                        .fail((e) => {
+                            console.log(e);
+                            console.log('Query failed');
+                        })
+                    self.$modal.modal({keyboard:false});
+                } else {
+                    alert("Please, enter a valid URL");
+                }
+
 
             });
-            // if( typeof options === 'string') {
-            // 	self.search = options;
-            // } else {
-            // 	self.search = options.search;
-            // }
-            //self.search = (typeof options ==='string')
-            //    ? options
-            //    : options.search;
-            //self.options = $.extend({}, $.fn.queryTwitch.options, options);
-
-            //self.refresh(250);
-            self.fetch()
-                .done(data => self.render(data))
-                .fail((e) => {
-                    console.log(e);
-                    console.log('Query failed');
-                })
+            self.$modal.on('hidden.bs.modal', (e) => {
+                console.log('hidden.bs.modal runs');
+                self.$modal.find('.messages').html("");
+            })
+            // self.fetch()
+            //     .done(data => self.render(data))
+            //     .fail((e) => {
+            //         console.log(e);
+            //         console.log('Query failed');
+            //     })
             //self.render();
-        },
-
-        testRender: function () {
-            const self = this;
-            self.$elem.append(self.template({data: [{name: "Abishek"}, {name: "Eugene"}]}));
         },
 
         render: function (data) {
@@ -77,6 +70,11 @@
             const self = this;
             let opts = $.extend({}, self.options.ajax, options);
             return $.ajax(opts);
+        },
+        validateURL: function (textval) {
+            var urlregex = new RegExp(
+                "^(http:\/\/www.|https:\/\/www.|ftp:\/\/www.|www.|http:\/\/|https:\/\/){1}([0-9A-Za-z]+\.)");
+            return urlregex.test(textval);
         },
 
         renderTable: function (elem, data) {
@@ -116,23 +114,6 @@
 
 
     Twitch.init(table, {});
-
-    $.fn.queryTwitch = function (options) {
-
-        return this.each(function () {
-            var twitch = Object.create(Twitch);
-            twitch.init(options, this);
-        });
-    };
-
-    $.fn.queryTwitch.options = {
-        search: 'gta',
-        wrapEachWith: '<li></li>',
-        limit: 10,
-        refresh: null,
-        onComplete: null,
-        transition: 'fadeToggle'
-    };
 
     Handlebars.registerHelper("makeLink", (text, url) => {
         text = Handlebars.Utils.escapeExpression(text);

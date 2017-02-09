@@ -26,11 +26,12 @@
     </div>
     <div class="row">
         <div id="table">
-            <h1>Site response stats</h1>
+
         </div>
     </div>
 
     <script id="table-template" type="text/x-handlebars-template">
+        <h2>Site response stats</h2>
         <table class="table table-striped">
             <thead>
             <th>#</th>
@@ -49,29 +50,33 @@
         </table>
     </script>
 
-    <div class="bs-example" data-example-id="simple-table">
-        <table class="table .table-striped">
-            <caption>Optional table caption.</caption>
-            <thead>
-            <tr>
-                <th>#</th>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>Username</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <th scope="row">1</th>
-                <td>Mark</td>
-                <td>Otto</td>
-                <td>@mdo</td>
-            </tr>
+    <!-- Button trigger modal -->
+    <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#statsModal">
+        Launch demo modal
+    </button>
 
-            </tbody>
-        </table>
+    <!-- Modal -->
+    <div class="modal fade" id="statsModal" tabindex="-1" role="dialog" aria-labelledby="statsModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">Modal title</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="messages"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary">Save changes</button>
+                </div>
+            </div>
+        </div>
     </div>
+
 </div>
+<script src="./javascripts/socket.io-client.min.js"></script>
+<script src="./javascripts/socket-client.js"></script>
 <script src="./javascripts/jquery.min.js"></script>
 <script src="./javascripts/handlebars.min.js"></script>
 <script src="./javascripts/bootstrap.min.js"></script>
