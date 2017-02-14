@@ -11,7 +11,7 @@
             self.options = options || {};
             self.url = 'http://localhost:3000/';
             self.options.ajax = {
-                url: self.url + 'data/',
+                url: self.url + 'crawl/',
                 type: "GET",
                 //data: {
                 //    type: 'suggest',
@@ -24,13 +24,14 @@
             self.$elem = $(elem);
             self.template = Handlebars.compile($('#table-template').html());
             self.$modal = $('#statsModal');
-            self.form = $('#urlForm');
-            self.form.on("submit", (e) => {
+            self.$form = $('#urlForm');
+            self.$stopBtn = $('#stopCrawling');
+            self.$form.on("submit", (e) => {
                 e.preventDefault();
-                if (document.querySelector('#urlInput').value) {
+                let url = document.querySelector('#urlInput').value;
+                if (self.validateURL(url)) {
                     self.fetch({
-                        url: self.url + 'crawl/',
-                        data: self.form.serialize()
+                        data: self.$form.serialize()
                     })
                         .done(data => self.render(data))
                         .fail((e) => {
@@ -39,22 +40,26 @@
                         })
                     self.$modal.modal({keyboard:false});
                 } else {
-                    alert("Please, enter a valid URL");
+                    const div = document.createElement('div');
+                    div.classList.add('alert');
+                    div.classList.add('alert-danger');
+                    div.innerHTML = `<strong>${url}</strong> is not a valid URL. Please, enter a valid one.`;
+                    document.querySelector('.main-input').appendChild(div);
+                    setTimeout(() => {
+                        document.querySelector('.alert').style.display = 'none';
+                    }, 2500);
                 }
 
 
             });
             self.$modal.on('hidden.bs.modal', (e) => {
-                console.log('hidden.bs.modal runs');
-                self.$modal.find('.messages').html("");
+                self.$modal.find('#realTimeTable tbody').html("");
+            });
+
+            self.$stopBtn.on('click', (e) => {
+                self.fetch({url: self.url + 'stop/'});
             })
-            // self.fetch()
-            //     .done(data => self.render(data))
-            //     .fail((e) => {
-            //         console.log(e);
-            //         console.log('Query failed');
-            //     })
-            //self.render();
+
         },
 
         render: function (data) {

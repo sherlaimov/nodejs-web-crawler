@@ -1,42 +1,47 @@
 'use strict';
 
 const express = require('express');
+const path = require('path');
 const router = express.Router();
 const crawler = require('../crawler');
 const colors = require('colors');
 const config = require('../config');
 const PubSub = require('../emitter');
 
-const arr = [];
 
-for (let i = 0; i <= 100; i++) {
-    arr.push(Math.random() * i);
-}
-// crawler();
 let data = {};
 
-let cnt = Number(0);
 
 /* GET home page. */
-router.get('/', (req, res, next) => {
-    console.log("****INSIDE THE INDEX ROUTE***".repeat(20));
+router.get('/', (req, res) => {
+
+    // console.log("****INSIDE THE INDEX ROUTE***".repeat(20));
     const io = req.app.get('socketio');
+    const connections = [];
 
     io.on("connection", function(socket) {
+        connections.push(socket);
+        console.log(`Connected: ${connections.length} sockets connected`);
 
-        socket.on("chat", function(message) {
-            socket.broadcast.emit("message", message);
-        });
+        // socket.on("chat", function(message) {
+        //     socket.broadcast.emit("message", message);
+        // });
 
-        PubSub.on('page', (data) => {
-            console.log('PAGE INSIDE INDEX ROUTE********************************');
-            socket.emit('message', data);
+
+        PubSub.on('live-table', (data) => {
+            socket.emit('live-table', data);
         })
-        socket.emit("message", "Welcome to Cyber Chat");
+
+        //socket.emit("message", "Welcome to Cyber Chat");
+
+        socket.on('disconnect', (data) => {
+            connections.splice(connections.indexOf(socket), 1);
+            console.log(`Disconnected: ${connections.length} sockets connected`);
+        });
 
     });
 
-    res.sendfile('./public/new_index.html');
+    res.sendFile('new_index.html', {root: path.normalize('./public/')});
     // res.status(200);
     //if (data.data.length !== oldVal) {
 
@@ -70,40 +75,28 @@ router.get('/', (req, res, next) => {
 
 router.get('/crawl', (req, res, next) => {
 
-    // const io = req.app.get('socketio');
-    //
-    // io.on("connection", function(socket) {
-    //
-    //     socket.on("chat", function(message) {
-    //         socket.broadcast.emit("message", message);
-    //     });
-    //
-    //     PubSub.on('page', (data) => {
-    //         console.log('PAGE INSIDE INDEX ROUTE********************************');
-    //         socket.emit('message', data);
-    //     })
-    //
-    //     socket.emit("message", "Welcome to Cyber Chat");
-    //
-    // });
-
     if (req.query.url) {
-        crawler({url: req.query.url});
+        crawler({url: req.query.url, stop: false});
 
-        PubSub.on('data-received', (data) => {
+        PubSub.on('data-sorted', (data) => {
             res.status(200);
             res.json({
                 reqParams: req.query,
                 data: data
             });
-            PubSub.removeAllListeners('data-received');
+            PubSub.removeAllListeners('data-sorted');
         })
     } else {
         res.status(404).end(`Cannot crawl ${req.query.url}, please provide a valid URL`);
     }
 
 
-})
+});
+
+router.get('/stop', (req, res) => {
+        crawler({stop: true});
+
+});
 
 router.post('/data', (req, res, next) => {
     //console.log(req);

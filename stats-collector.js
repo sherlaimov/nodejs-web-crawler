@@ -4,10 +4,6 @@ const request = require('request');
 const PubSub = require('./emitter');
 const output = [];
 
-PubSub.on('blah', () => {
-    console.log('blah'.repeat(15));
-})
-
 PubSub.on('data-received', (pagesVisited) => {
     for (let i = 0; i < 5; i++) {
         iterate(pagesVisited);
@@ -16,10 +12,12 @@ PubSub.on('data-received', (pagesVisited) => {
 
     output.length = 0;
 
+    //Bluebird js?
     setTimeout(() => {
         //const sorted = output.reduce((targetObj, currObj, index, array) => {
         //
         //}, {});
+        //Slowest requests should be on top
 
         const found = [];
         const sorted = output.map(function(page, i) {
@@ -30,7 +28,7 @@ PubSub.on('data-received', (pagesVisited) => {
                     if (page.url === output[i].url) {
                         newObj.url = page.url;
                         newObj.time.push(output[i].time);
-                        newObj.size.push(output[i].size);
+                        newObj.size = output[i].size;
                     }
                 }
                 return newObj;
@@ -45,10 +43,10 @@ PubSub.on('data-received', (pagesVisited) => {
                 }
 
             })
-
+        PubSub.emit('data-sorted', sorted);
         //console.log('************** => OUTPUT <= *********************');
         //console.log(JSON.stringify(sorted, null, 2));
-    }, 3500);
+    }, 1500);
 
 })
 

@@ -10,7 +10,7 @@ emitter.on('data-received', (e) => {
 });
 
 
-emitter.on('page', (url) => {
-    console.log(`page event ${url}`.rainbow);
+emitter.on('data-sorted', (data) => {
+    console.log(`********* DATA SORTED EVENT`.rainbow);
 });
 module.exports = emitter;

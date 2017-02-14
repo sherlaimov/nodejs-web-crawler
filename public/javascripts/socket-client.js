@@ -2,33 +2,23 @@
  * Created by ES on 09.02.2017.
  */
 
+var socket = io("http://localhost:3000");
 
-//var socket = io("http://nuclear.t.javascript.ninja", {
-//    transports: ['websocket', 'xhr-polling']
-//});
- var socket = io("http://localhost:3000");
-//ws://nuclear.t.javascript.ninja
-
-socket.on("disconnect", function() {
+socket.on("disconnect", function () {
     setTitle("Disconnected");
+    socket.close();
 });
 
-socket.on("connect", function() {
+socket.on("connect", function () {
     console.log('THIS NEVER RUNS????');
-    setTitle("Connected to Cyber Chat");
+    setTitle("Socket IO Connected");
 });
 
-socket.on("message", function(message) {
-    console.log(message);
-    printMessage(message);
+socket.on("message", function (message) {
+    // console.log(message);
+    // printMessage(message);
 });
-//
-//document.forms[0].onsubmit = function () {
-//    var input = document.getElementById("message");
-//    printMessage(input.value);
-//    socket.emit("chat", input.value);
-//    input.value = '';
-//};
+
 
 function setTitle(title) {
     document.querySelector("h1").innerHTML = title;
@@ -40,4 +30,65 @@ function printMessage(message) {
     const messagesDiv = document.querySelector("div.messages");
     messagesDiv.insertBefore(p, messagesDiv.firstChild);
 }
+
+
+
+function printTable(data) {
+    const tr = document.createElement('tr');
+    const html = `<td>${data.url}</td><td>${data.time}</td><td>${data.size}</td>`;
+    tr.innerHTML = html;
+    const tbody = document.querySelector('#realTimeTable tbody');
+    tbody.insertBefore(tr, tbody.firstChild);
+    // console.log(data);
+
+}
+
+
+socket.on("live-table", function (data) {
+    averageLoadTime(data.time);
+    //console.log(data);
+    printTable(data);
+
+});
+
+
+//const h3 = document.querySelector('h3');
+const aveResTime = document.querySelector('#aveResTime');
+const pagesCrawled = document.querySelector('#pagesCrawled');
+//mHeader.appendChild(h3);
+//span.inner
+let arr = [];
+
+let avg = 0;
+function averageLoadTime(time) {
+    arr.push(time);
+
+    if (arr.length != 0) {
+        let sum = 0;
+        for( let i = 0; i < arr.length; i++ ){
+            sum += parseInt( arr[i]);
+        }
+
+        avg = sum / arr.length;
+        aveResTime.innerHTML = Math.round(avg);
+        pagesCrawled.innerHTML = arr.length;
+        //console.log(`Response time sum ${sum}`);
+        //console.log(`Array length ${arr.length}`);
+        ////
+        //console.log('AVERAGE');
+        //console.log(avg);
+    }
+
+
+}
+
+socket.once('live-table', function(data){
+    //console.log('************ Got event ONCE');
+    //console.log(arr.length != 0);
+
+
+});
+
+
+
 
