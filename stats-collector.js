@@ -14,10 +14,10 @@ PubSub.on('data-received', (pagesVisited) => {
 
     //Bluebird js?
     setTimeout(() => {
-        //const sorted = output.reduce((targetObj, currObj, index, array) => {
-        //
-        //}, {});
-        //Slowest requests should be on top
+        //console.log('************* => OUTPUT <= ****************');
+        //console.log(output);
+
+        //array_merge([], [])
 
         const found = [];
         const sorted = output.map(function(page, i) {
@@ -31,28 +31,37 @@ PubSub.on('data-received', (pagesVisited) => {
                         newObj.size = output[i].size;
                     }
                 }
+                newObj.maxTime = Math.max.apply(Math, newObj.time);
+                newObj.avgTime = Math.round(newObj.time.reduce((a, b) => a+ b) / newObj.time.length);
+                newObj.minTime = Math.min.apply(Math, newObj.time);
                 return newObj;
             })
-            .filter(function(page, i, arr) {
-                for (let i = 0; i < arr.length; i++){
-                    // if (page.url == arr[i].url && ! found.includes(arr[i].url)) {
-                    if (page.url == arr[i].url && found.indexOf(arr[i].url) == -1) {
-                        found.push(page.url);
-                        return page;
-                    }
-                }
+             .filter(function(page, i, arr) {
+                 for (let i = 0; i < arr.length; i++){
+                     // if (page.url == arr[i].url && ! found.includes(arr[i].url)) {
+                     if (page.url == arr[i].url && found.indexOf(arr[i].url) == -1) {
+                         found.push(page.url);
+                         return page;
+                     }
+                 }
 
-            })
+             })
+        //.reduce((a, b, i, arr) => {
+        //    a.push(b.url);
+        //    if (b.url == arr[i].url && a.indexOf(arr[i].url) == -1) {
+        //        return b;
+        //    }
+        //}, [])
+
         PubSub.emit('data-sorted', sorted);
-        //console.log('************** => OUTPUT <= *********************');
+        //console.log('************** => SORTED <= *********************');
         //console.log(JSON.stringify(sorted, null, 2));
-    }, 1500);
+    }, 2500);
 
 })
 
 
 function iterate(pagesVisited) {
-    let pageStats = {};
 
     pagesVisited.forEach((page) => {
         let infoObj = {};
@@ -72,20 +81,11 @@ function iterate(pagesVisited) {
             }
 
             if (body) {
-                // console.log(page.url.toString().toUpperCase());
                 let reqTime = new Date().getTime() - before;
-                // infoObj[url].push({time: reqTime, size: body.length});
                 infoObj.url = page.url;
                 infoObj.time = reqTime;
                 infoObj.size = body.length;
-                //PRINT THIS FOR DMITRY - It is already an object with 2 keys
-                // console.log(infoObj);
                 output.push(infoObj);
-
-                // pageStats.time = reqTime;
-                // pageStats.size = body.length;
-                //infoObj[url].size = body.length;
-                //console.log('REQUEST TIME'.bgRed);
 
             }
         });

@@ -1,4 +1,5 @@
-@import url(http://fonts.googleapis.com/css?family=Roboto+Slab:700|Exo+2:300,600);
+/*@import url(http://fonts.googleapis.com/css?family=Roboto+Slab:700|Exo+2:300,600,100);*/
+@import url('https://fonts.googleapis.com/css?family=Roboto+Slab:100,300,400,700');
 
 /* Eric Meyer's Reset CSS v2.0 - http://cssreset.com */
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td,article,aside,canvas,details,embed,figure,figcaption,footer,header,hgroup,menu,nav,output,ruby,section,summary,time,mark,audio,video{border:0;font-size:100%;font:inherit;vertical-align:baseline;margin:0;padding:0}article,aside,details,figcaption,figure,footer,header,hgroup,menu,nav,section{display:block}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:none}table{border-collapse:collapse;border-spacing:0}
@@ -36,12 +37,22 @@ strong {
   font-weight: 600;
 }
 
+h1 {
+  font-size: 1.75em;
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Roboto Slab', "Helvetica Neue", Helvetica, sans-serif;
-  font-weight: 700;
-  color: #CB4B19;
-  font-size: 1.75em;
+  font-weight: 300;
+  color: #358acb;
   margin-bottom: .4em;
+}
+h2 {
+  font-size: 1.5em;
+}
+h3 {
+  font-size:1.2em;
+  color: #337ab7;
 }
 
 p {
@@ -49,10 +60,95 @@ p {
 }
 
 .container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
   height: 100%;
   width: 80%;
   max-width: 1200px;
   margin: 0 auto;
-  margin-top:10px;
 }
 
+.modal-dialog {
+  width: 70%;
+}
+
+.modal-header button {
+  font-size: 1.2em;
+}
+
+.alert {
+  transition: all .3s ease;
+  display: none;
+}
+
+.totalAvgBar {
+  height: 40px;
+  position: relative;
+}
+.totalAvgBar:before {
+  content: attr(data-val);
+  z-index: 10000;
+  color: #fff;
+  display: block;
+  position: relative;
+}
+.totalAvgBar > span {
+  position: absolute;
+  top:0;
+  left:0;
+  bottom: 0;
+  background-color: #29b1ff;
+  width: 35%;
+}
+
+#table  {
+  position: relative;
+  margin-top: 1em;
+}
+
+.progress {
+  height: 35px;
+  position: relative;
+}
+
+/*.progress span {*/
+  /*pos*/
+/*}*/
+.values span:nth-child(1) {
+  /*float: left;*/
+}
+
+.values span:nth-child(2) {
+  float: right;
+}
+.values span {
+  clear: both;
+}
+
+.progress-bar {
+  font-size:20px;
+  line-height:35px;
+}
+/*.progress-bar {*/
+  /*position: absolute;*/
+  /*top:0;*/
+  /*left:0;*/
+  /*bottom: 0;*/
+/*}*/
+
+.socket-status {
+  /*display: none;*/
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: .6em;
+  color: #64d64d;
+}
+
+.socket-status > span {
+  padding-left: .5em;
+}
+
+.bar { fill: steelblue; }

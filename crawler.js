@@ -15,7 +15,7 @@ const statsCollector = require('./stats-collector');
 let START_URL = "www.kayako-development.com";
 //  var START_URL = "http://gram.com.ua";
 // let START_URL = "http://www.mrcplast.com/";
-const MAX_PAGES_TO_VISIT = 25;
+const MAX_PAGES_TO_VISIT = 100;
 
 const pagesVisited = [];
 let numPagesVisited = 0;
@@ -29,8 +29,8 @@ pagesToVisit.push(baseUrl);
 let opts = {stop: false};
 function crawl(options) {
     opts = Object.assign(opts, options);
-    console.log('********************* OPTIONS OBJECT ***************');
-    console.log(opts);
+    //console.log('********************* OPTIONS OBJECT ***************');
+    //console.log(opts);
 
     if (opts.stop) {
         PubSub.emit('data-received', pagesVisited);
@@ -76,14 +76,15 @@ function crawl(options) {
 
     } else if (nextPage != undefined && opts.stop !== true) {
         // New page we haven't visited
-        console.log('Next page'.bgMagenta);
-        console.log(nextPage);
+        // console.log('Next page'.bgMagenta);
+        // console.log(nextPage);
         visitPage(nextPage, crawl);
     } else {
         console.log('All pages have been crawled'.bgGreen);
         console.log('Pages visited'.bgGreen);
-        console.log(pagesVisited);
         console.log(`Total of visited pages ${pagesVisited.length}`);
+        console.log('Starting stats collection...');
+        PubSub.emit('data-received', pagesVisited);
         return;
     }
 

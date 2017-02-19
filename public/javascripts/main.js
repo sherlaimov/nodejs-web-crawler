@@ -2,7 +2,7 @@
  * Created by ES on 04.02.2017.
  */
 
-;(function ($, Handlebars) {
+;(function ($, Handlebars, d3) {
 
 
     var Twitch = {
@@ -31,22 +31,20 @@
                 let url = document.querySelector('#urlInput').value;
                 if (self.validateURL(url)) {
                     self.fetch({
-                        data: self.$form.serialize()
-                    })
+                            data: self.$form.serialize()
+                        })
                         .done(data => self.render(data))
                         .fail((e) => {
                             console.log(e);
                             console.log('Query failed');
                         })
-                    self.$modal.modal({keyboard:false});
+                    self.$modal.modal({keyboard: false});
                 } else {
-                    const div = document.createElement('div');
-                    div.classList.add('alert');
-                    div.classList.add('alert-danger');
-                    div.innerHTML = `<strong>${url}</strong> is not a valid URL. Please, enter a valid one.`;
-                    document.querySelector('.main-input').appendChild(div);
+                    const alert = document.querySelector('.alert');
+                    alert.innerHTML = `<strong>${url}</strong> is not a valid URL. Please, enter a valid one which starts with either "http://" or "www."`;
+                    alert.style.display = 'block';
                     setTimeout(() => {
-                        document.querySelector('.alert').style.display = 'none';
+                        alert.style.display = 'none';
                     }, 2500);
                 }
 
@@ -54,6 +52,9 @@
             });
             self.$modal.on('hidden.bs.modal', (e) => {
                 self.$modal.find('#realTimeTable tbody').html("");
+                document.querySelector('#aveResTime').innerHTML = '';
+                document.querySelector('#pagesCrawled').innerHTML = '';
+
             });
 
             self.$stopBtn.on('click', (e) => {
@@ -66,8 +67,22 @@
             console.log(data);
             const self = this;
             if ("data" in data) {
-                self.$elem.html('').append(self.template(data.data));
+                self.$elem.html('').append(self.template(data));
+                createChart(data);
             }
+            if (data.avgTime) {
+                // let end = data.avgMax - data.avgMin;
+                // let newAvg = data.avgTime - data.avgMin;
+                // let val = ( newAvg / end ) * 100;
+                let newAvg = Math.round(((data.avgTime - data.avgMin) / (data.avgMax - data.avgMin)) * 100);
+                console.log(newAvg);
+                const progressBar = document.querySelector('.progress-bar');
+                progressBar.style.width = `${newAvg}%`;
+                progressBar.innerHTML = `Average page speed ${data.avgTime} ms`;
+                //const span = document.createElement('span');
+
+            }
+
 
         },
 
@@ -127,113 +142,124 @@
         return new Handlebars.SafeString(link);
     })
 
-})(jQuery, Handlebars);
+    Handlebars.registerHelper("counter", function (value, options) {
+        return parseInt(value) + 1;
+    });
 
 
-;(function ($, Handlebars) {
-    'use strict';
+    //https://bl.ocks.org/d3noob/bdf28027e0ce70bd132edc64f1dd7ea4
 
-    var namespace = window,
-        pluginName = 'TemplateEngine';
+    function createChart({data:data, avgMax: avgMax, avgMin:avgMin, avgTime: avgTime}) {
 
-    var TemplateEngine = function TemplateEngine(options) {
-        if (!(this instanceof TemplateEngine)) {
-            return new TemplateEngine(options);
-        }
+        // set the dimensions and margins of the graph
+        var margin = {top: 20, right: 20, bottom: 30, left: 60},
+            width = 970 - margin.left - margin.right,
+            height = 500 - margin.top - margin.bottom;
 
-        this.settings = $.extend({}, TemplateEngine.Defaults, options);
-        this._storage = {};
+        //const colors = d3.scaleOrdinal(d3.schemeCategory10);
+        const colors = d3.scaleLinear()
+            .domain([avgMin, avgMax])
+            .range(['#f4eb42', '#f44141']);
+// set the ranges
+        var x = d3.scaleBand()
+            .range([0, width])
+            .padding(0.1);
+        var y = d3.scaleLinear()
+            .range([height, 0]);
 
-        return this;
-    };
-    TemplateEngine.Defaults = {
-        templateDir: './tpl/',
-        templateExt: '.tpl'
-    };
+// append the svg object to the body of the page
+// append a 'group' element to 'svg'
+// moves the 'group' element to the top left margin
+        var svg = d3.select("#chart").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    TemplateEngine.prototype = {
-        constructor: TemplateEngine,
+// get the data
 
-        load: function (name, $deferred) {
-            var self = this;
-            $deferred = $deferred || $.Deferred();
+        //console.log(data);
+        // Scale the range of the data in the domains
+        //x.domain(data.map(function(d) { return d.salesperson; }));
+        x.domain(d3.range(0, data.length));
+        y.domain([avgMin, avgMax]);
 
-            if (self.isCached(name)) {
-                $deferred.resolve(self._storage[name]);
-            } else {
-                $.ajax(self.urlFor(name)).done(function (raw) {
-                    self.store(name, raw);
-                    self.load(name, $deferred);
-                });
-            }
+        // append the rectangles for the bar chart
+        svg.selectAll(".bar")
+            .data(data)
+            .enter().append("rect")
+            .attr("class", "bar")
+            .style('fill', (d, i) => colors(d.avgTime))
+            .attr("x", function (d, i) {
+                return x(i);
+            })
+            .attr("width", x.bandwidth())
+            .attr("y", height)
+            .attr("height", 0)
+            //.attr('height', function (d) {
+            //    return height - y(d.avgTime);
+            //})
+            //.attr('y', (d) => y(d.avgTime))
 
-            return $deferred.promise();
-        },
-        fetch: function (name) {
-            var self = this;
+        svg.selectAll('.bar').transition()
+            .attr('height', function (d) {
+                return height - y(d.avgTime);
+            })
+            .attr('y', (d) => y(d.avgTime))
+            .delay((d, i) => i * 20)
+            .duration(1000);
 
-            $.ajax(self.urlFor(name)).done(function (raw) {
-                self.store(name, raw);
+        let tempColor;
+        const tooltip = d3.select('body').append('div')
+            .style('position', 'absolute')
+            .style('padding', '0 10px')
+            .style('background', '#fff')
+            .style('opacity', 0);
+        svg.selectAll('.bar')
+            .on("mouseover", function (d, i, e) {
+                //console.dir(this);
+                tooltip.transition()
+                    .style('opacity', .9);
+
+                tooltip.html('<h4>' + data[i].url + '</h4>' + d.avgTime + ' ms')
+                    .style('left', (d3.event.pageX - 20) + 'px')
+                    .style('top', (d3.event.pageY - 60) + 'px');
+
+                //console.log(this.$el.find('rect'));
+                tempColor = this.style.fill;
+                d3.select(this)
+                    .transition()
+                    .style('opacity', .5)
+                    .style('fill', '#fbf606')
+            })
+            .on('mouseout', function (d) {
+                tooltip.html('')
+                d3.select(this)
+                    .transition().duration(250)
+                    .style('opacity', 1)
+                    .style('fill', tempColor)
             });
-        },
-        isCached: function (name) {
-            return !!this._storage[name];
-        },
-        store: function (name, raw) {
-            this._storage[name] = Handlebars.compile(raw);
-        },
-        urlFor: function (name) {
-            return (this.settings.templateDir + name + this.settings.templateExt);
-        }
-    };
+
+        // add the x Axis
+        svg.append("g")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x));
+
+        // add the y Axis
+        svg.append("g")
+            .call(d3.axisLeft(y));
+
+        // text label for the y axis
+        svg.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 0 - margin.left)
+            .attr("x",0 - (height / 2))
+            .attr("dy", "1em")
+            .style("text-anchor", "middle")
+            .text("Average Response Time in Milliseconds");
 
 
-    window[pluginName] = TemplateEngine;
+    }
 
-})(jQuery, Handlebars);
+})(jQuery, Handlebars, d3);
 
-(function () {
-    var Twitter = {
-        init: function (config) {
-            this.url = 'http://weareukraine/tweets/gettweets/?count=6&screen_name=weareukraine&callback=?';
-            this.template = config.template;
-            //console.log(this.template);
-            //return true;
-            this.container = config.container;
-            this.fetch();
-            //console.log(this.tweets);
-        },
-        attachTemplate: function () {
-            var template = Handlebars.compile(this.template);
-            this.container.append(template(this.tweets));
-            //console.log(html);
-        },
-        fetch: function () {
-            var self = this;
-            $.getJSON(this.url, function (data) {
-                console.log(this);
-                self.tweets = $.map(data, function (tweet) {
-                    return {
-                        author: tweet.user.name,
-                        userScreenName: tweet.user.screen_name,
-                        thumb: tweet.user.profile_image_url,
-                        date: tweet.created_at,
-                        text: tweet.text,
-                        retweetCount: tweet.retweet_count,
-                        url: 'https://twitter.com/' + tweet.user.screen_name + '/status/' + tweet.id_str,
-                        userLocation: tweet.user.location,
-                        // image: data[0].extended_entities.media[0].media_url
-                        // image: tweet.extended_entities.media[0].media_url
-                        // tweet.extended_entities.media_url_https
-                    };
-                });
-                self.attachTemplate();
-                console.log(data[0].extended_entities.media[0].media_url);
-            });
-        }
-    };
-    //Twitter.init({
-    //    template: $('#tweets-template').html(),
-    //    container: $('ul.tweets')
-    //});
-})(jQuery);

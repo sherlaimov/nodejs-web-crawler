@@ -79,10 +79,19 @@ router.get('/crawl', (req, res, next) => {
         crawler({url: req.query.url, stop: false});
 
         PubSub.on('data-sorted', (data) => {
+            let avgSum = data.reduce((a, b) => { return a + b.avgTime }, 0);
+            let minSum = data.reduce((a, b) => { return a + b.minTime }, 0);
+            let maxSum = data.reduce((a, b) => { return a + b.maxTime }, 0);
+            let avgMax = Math.round( maxSum / data.length );
+            let avgMin = Math.round( minSum / data.length );
+            let avgTime = Math.round( avgSum / data.length);
             res.status(200);
             res.json({
                 reqParams: req.query,
-                data: data
+                data: data,
+                avgTime: avgTime,
+                avgMin: avgMin,
+                avgMax: avgMax
             });
             PubSub.removeAllListeners('data-sorted');
         })
@@ -92,11 +101,13 @@ router.get('/crawl', (req, res, next) => {
 
 
 });
-
 router.get('/stop', (req, res) => {
         crawler({stop: true});
+        res.status(200).end('Stop action');
+
 
 });
+
 
 router.post('/data', (req, res, next) => {
     //console.log(req);

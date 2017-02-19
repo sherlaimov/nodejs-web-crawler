@@ -2,22 +2,27 @@
  * Created by ES on 09.02.2017.
  */
 
-var socket = io("http://localhost:3000");
+const socket = io("http://localhost:3000");
 
 socket.on("disconnect", function () {
-    setTitle("Disconnected");
-    socket.close();
+     const status = document.querySelector('.socket-status');
+    status.firstChild.innerHTML = 'Socket IO disconnected';
+    status.style.color = 'red';
+    //socket.close();
 });
 
 socket.on("connect", function () {
-    console.log('THIS NEVER RUNS????');
-    setTitle("Socket IO Connected");
+    const status = document.querySelector('.socket-status');
+    status.firstChild.innerHTML = 'Socket IO connected';
+    status.style.color = '#64d64d';
 });
 
 socket.on("message", function (message) {
     // console.log(message);
     // printMessage(message);
 });
+
+
 
 
 function setTitle(title) {
@@ -78,7 +83,6 @@ function averageLoadTime(time) {
         //console.log('AVERAGE');
         //console.log(avg);
     }
-
 
 }
 
