@@ -15,7 +15,7 @@ const statsCollector = require('./stats-collector');
 let START_URL = "www.kayako-development.com";
 //  var START_URL = "http://gram.com.ua";
 // let START_URL = "http://www.mrcplast.com/";
-const MAX_PAGES_TO_VISIT = 100;
+const MAX_PAGES_TO_VISIT = 40;
 
 const pagesVisited = [];
 let numPagesVisited = 0;

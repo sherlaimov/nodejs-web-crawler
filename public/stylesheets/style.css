@@ -83,29 +83,30 @@ p {
   display: none;
 }
 
-.totalAvgBar {
-  height: 40px;
-  position: relative;
-}
-.totalAvgBar:before {
-  content: attr(data-val);
-  z-index: 10000;
-  color: #fff;
-  display: block;
-  position: relative;
-}
-.totalAvgBar > span {
-  position: absolute;
-  top:0;
-  left:0;
-  bottom: 0;
-  background-color: #29b1ff;
-  width: 35%;
-}
+/*.totalAvgBar {*/
+  /*height: 40px;*/
+  /*position: relative;*/
+/*}*/
+/*.totalAvgBar:before {*/
+  /*content: attr(data-val);*/
+  /*z-index: 10000;*/
+  /*color: #fff;*/
+  /*display: block;*/
+  /*position: relative;*/
+/*}*/
+/*.totalAvgBar > span {*/
+  /*position: absolute;*/
+  /*top:0;*/
+  /*left:0;*/
+  /*bottom: 0;*/
+  /*background-color: #29b1ff;*/
+  /*width: 35%;*/
+/*}*/
 
 #table  {
   position: relative;
   margin-top: 1em;
+  min-height:100%;
 }
 
 .progress {
@@ -131,12 +132,6 @@ p {
   font-size:20px;
   line-height:35px;
 }
-/*.progress-bar {*/
-  /*position: absolute;*/
-  /*top:0;*/
-  /*left:0;*/
-  /*bottom: 0;*/
-/*}*/
 
 .socket-status {
   /*display: none;*/
@@ -151,4 +146,39 @@ p {
   padding-left: .5em;
 }
 
-.bar { fill: steelblue; }
+.bar {
+  /*fill: steelblue;*/
+  cursor: pointer;
+}
+
+.bar--positive {
+  fill: steelblue;
+}
+
+.bar--negative {
+  fill: #64d64d;
+}
+
+.axis text {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.toolTip {
+    position: absolute;
+    display: none;
+    width: auto;
+    height: auto;
+    background: none repeat scroll 0 0 white;
+    border: 0 none;
+    border-radius: 8px 8px 8px 8px;
+    box-shadow: -3px 3px 15px #888888;
+    padding: 5px;
+}
+

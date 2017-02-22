@@ -6,14 +6,24 @@ const socket = io("http://localhost:3000");
 
 socket.on("disconnect", function () {
      const status = document.querySelector('.socket-status');
-    status.firstChild.innerHTML = 'Socket IO disconnected';
+    status.firstChild.textContent = 'Socket IO disconnected';
+    const span = status.querySelector('span');
+    if (span.classList.contains('glyphicon-ok-sign')) {
+        span.classList.remove('glyphicon-ok-sign');
+        span.classList.add('glyphicon-remove-sign');
+    }
     status.style.color = 'red';
-    //socket.close();
+    // socket.close();
 });
 
 socket.on("connect", function () {
     const status = document.querySelector('.socket-status');
-    status.firstChild.innerHTML = 'Socket IO connected';
+    status.firstChild.textContent = 'Socket IO connected';
+    const span = status.querySelector('span');
+    if (span.classList.contains('glyphicon-remove-sign')) {
+        span.classList.remove('glyphicon-remove-sign');
+        span.classList.add('glyphicon-ok-sign');
+    }
     status.style.color = '#64d64d';
 });
 
@@ -58,13 +68,18 @@ socket.on("live-table", function (data) {
 
 
 //const h3 = document.querySelector('h3');
-const aveResTime = document.querySelector('#aveResTime');
+// const aveResTime = document.querySelector('#aveResTime');
 const pagesCrawled = document.querySelector('#pagesCrawled');
 //mHeader.appendChild(h3);
 //span.inner
 let arr = [];
 
 let avg = 0;
+let minTime = 0;
+let maxTime = 0;
+const liveProgress = document.querySelector('.live-speed');
+const minSpan = document.querySelector('#minSpeed');
+const maxSpan = document.querySelector('#maxSpeed');
 function averageLoadTime(time) {
     arr.push(time);
 
@@ -74,8 +89,18 @@ function averageLoadTime(time) {
             sum += parseInt( arr[i]);
         }
 
-        avg = sum / arr.length;
-        aveResTime.innerHTML = Math.round(avg);
+        avg = Math.round(sum / arr.length);
+        minTime = Math.min.apply(null, arr);
+        maxTime = Math.max.apply(null, arr);
+        let percent = Math.round(((avg - minTime) / (maxTime - minTime)) * 100);
+        liveProgress.style.width = `${percent}%`;
+        liveProgress.innerHTML = `${avg} ms`;
+        minSpan.innerHTML = minTime;
+        maxSpan.innerHTML = maxTime;
+        // console.log(`Min val ${Math.min.apply(null, arr)}`);
+        // console.log(`AVG val ${Math.round(avg)}`);
+        // console.log(`Max val ${Math.max.apply(null, arr)}`);
+        // aveResTime.innerHTML = Math.round(avg);
         pagesCrawled.innerHTML = arr.length;
         //console.log(`Response time sum ${sum}`);
         //console.log(`Array length ${arr.length}`);

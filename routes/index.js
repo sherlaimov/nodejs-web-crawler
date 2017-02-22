@@ -42,34 +42,9 @@ router.get('/', (req, res) => {
     });
 
     res.sendFile('new_index.html', {root: path.normalize('./public/')});
-    // res.status(200);
-    //if (data.data.length !== oldVal) {
-
-    // res.json({
-    //     reqParams: req.query,
-    //     data: data
-    // });
-
-
-    // res.end({
-    //     resp: "inside the crawl route",
-    //     originalUrl: req.originalUrl,
-    //     reqParams: req.params,
-    //     reqQuery: req.query.url
-    // });
 
 });
-//
-//router.route('/crawl/:url')
-//    .get( (req, res) => {
-//        console.log("INSIDE THE ROUTE");
-//        if (req.params.url) {
-//            console.log(req.params.url);
-//            res.json(req.params);
-//        } else {
-//            res.json(req.body);
-//        }
-//    });
+
 
 
 
