@@ -5,7 +5,7 @@ const path = require('path');
 const router = express.Router();
 const crawler = require('../crawler');
 const colors = require('colors');
-const config = require('../config');
+const config = require('../../config');
 const PubSub = require('../emitter');
 
 

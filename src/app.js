@@ -5,23 +5,28 @@ const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const hbs = require('express-handlebars');
-// const router = express.Router();
 
+const config = require('../config');
 const index = require('./routes/index');
 const users = require('./routes/users');
 
 const app = express();
 
 // view engine setup
-app.engine('hbs', hbs({extname: 'hbs', defaultLayout: 'layout', layoutDir: __dirname + '/views/layouts/'}));
-app.set('views', path.join(__dirname, 'views'));
+app.engine('hbs', hbs({
+  extname: 'hbs',
+  defaultLayout: 'layout',
+  layoutDir: config.layoutDir,
+  layoutsDir: config.layoutDir,
+}));
+app.set('views', config.viewsDir);
 app.set('view engine', 'hbs');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(config.publicDir));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
