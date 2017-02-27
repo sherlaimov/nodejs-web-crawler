@@ -63,13 +63,13 @@ PubSub.on('data-received', (pagesVisited) => {
 
 function iterate(pagesVisited) {
 
-    pagesVisited.forEach((page) => {
+    pagesVisited.forEach((url) => {
         let infoObj = {};
         // console.log(`Collecting stats for page ${page.url}`);
         const d = new Date();
         const before = d.getTime();
 
-        request(page.url, function (error, response, body) {
+        request(url, function (error, response, body) {
             if (error) {
                 console.log(error);
                 console.log(`An error has occurred \n code: ${error.code}`);
@@ -82,7 +82,7 @@ function iterate(pagesVisited) {
 
             if (body) {
                 let reqTime = new Date().getTime() - before;
-                infoObj.url = page.url;
+                infoObj.url = url;
                 infoObj.time = reqTime;
                 infoObj.size = body.length;
                 output.push(infoObj);

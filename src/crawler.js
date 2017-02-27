@@ -3,177 +3,116 @@
  */
 'use strict';
 
-const request = require('request');
+const fetch = require('node-fetch');
 const cheerio = require('cheerio');
 const URL = require('url-parse');
 const colors = require('colors');
-const fs = require('fs');
-const PubSub = require('./emitter');
+const events = require('events');
 const statsCollector = require('./stats-collector');
+const PubSub = require('./emitter');
 
-// var START_URL = "http://www.arstechnica.com";
-let START_URL = "www.kayako-development.com";
-//  var START_URL = "http://gram.com.ua";
-// let START_URL = "http://www.mrcplast.com/";
 const MAX_PAGES_TO_VISIT = 40;
 
-const pagesVisited = [];
-let numPagesVisited = 0;
-const pagesToVisit = [];
-let url = new URL(START_URL);
-let baseUrl = url.protocol + "//" + url.hostname;
+class Crawler extends events.EventEmitter {
+    constructor () {
+        super();
 
-pagesToVisit.push(baseUrl);
-
-
-let opts = {stop: false};
-function crawl(options) {
-    opts = Object.assign(opts, options);
-    //console.log('********************* OPTIONS OBJECT ***************');
-    //console.log(opts);
-
-    if (opts.stop) {
-        PubSub.emit('data-received', pagesVisited);
-        pagesToVisit.length = 0;
-        return;
+        this.pagesToVisit = [];
+        this.on('crawler-stop', () => this.stop(this.pagesToVisit));
     }
 
-    if (opts.url) {
-        START_URL = opts.url;
-        url = new URL(START_URL);
-        if (url.hostname === ''){
-            let newUrl = '';
-            if (url.href.indexOf('www.') != -1) {
-                newUrl = url.href.replace('www.', '');
-            }
-            baseUrl = `http://${newUrl}`;
-        } else {
-            baseUrl = url.protocol + '//' + url.hostname;
-        }
-        pagesToVisit.length = 0;
-        pagesVisited.length = 0;
-        numPagesVisited = 0;
-        pagesToVisit.push(baseUrl);
-        delete opts.url;
-    }
+    crawl(url) {
+        return Promise.all([this.visitPage(url)
+        .then(info => {
+            this.pagesToVisit.push(info.url);
 
-    if (numPagesVisited >= MAX_PAGES_TO_VISIT) {
-        console.log('Pages visited'.bgGreen);
-        console.log("Reached max limit of number of pages to visit.");
-        console.log(`Total of visited pages ${pagesVisited.length}`);
-        console.log('Starting stats collection...');
-        PubSub.emit('data-received', pagesVisited);
-        //collectStats(pagesVisited);
-        return;
-    }
+            this.emit('live-table', info);
 
+            const $ = cheerio.load(info.body);
+            const baseUrl = new URL(url).origin;
 
-    let nextPage = pagesToVisit.pop();
+            const promises = this.getInternalLinks(baseUrl, $)
+                    .map((url) => new URL(url))
+                    .filter((urlObj) => baseUrl === urlObj.origin)
+                    .map((urlObj) => `${baseUrl}${urlObj.pathname}`)
+                    .filter((url) => url && !this.pagesToVisit.includes(url) &&
+                                     this.pagesToVisit.length < MAX_PAGES_TO_VISIT &&
+                                     this.pagesToVisit.push(url))
+                    .map((url) => this.visitPage(url || baseUrl)
+                    .then((info) => {
+                        this.emit('live-table', info);
+                    }));
 
-    if (pagesVisited.find(page => nextPage === page.url) !== undefined) {
-        // We've already visited this page, so repeat the crawl
-        crawl();
-
-    } else if (nextPage != undefined && opts.stop !== true) {
-        // New page we haven't visited
-        // console.log('Next page'.bgMagenta);
-        // console.log(nextPage);
-        visitPage(nextPage, crawl);
-    } else {
-        console.log('All pages have been crawled'.bgGreen);
-        console.log('Pages visited'.bgGreen);
-        console.log(`Total of visited pages ${pagesVisited.length}`);
-        console.log('Starting stats collection...');
-        PubSub.emit('data-received', pagesVisited);
-        return;
-    }
-
-    if (pagesVisited.length !== 0) {
-        return pagesVisited;
-    }
-}
-
-function visitPage(url, callback) {
-    let infoObj = {
-        url: url,
-        time: null,
-        size: null
-    };
-    numPagesVisited++;
-    console.log(`Total pages visited ${numPagesVisited}`.bgCyan);
-
-    const d = new Date();
-    const before = d.getTime();
-    // Make the request
-    console.log(`Visiting page ${url}`);
-    request(url, function (error, response, body) {
-        // Check status code (200 is HTTP OK)
-        //fs.writeFile(`response.txt`, JSON.stringify(response));
-        if (error) {
+            return Promise.all(promises);
+        })])
+        .then(() => this.stop(this.pagesToVisit))
+        .catch((error) => {
             console.log(error);
             console.log(`An error has occurred \n code: ${error.code}`);
-            return;
-        }
+        });
+    }
 
-        console.log("Status code: " + response.statusCode);
+    visitPage(url) {
+        const start = new Date().getTime();
+        console.log(`Visiting page ${url}`);
 
-        if (response.statusCode !== 200) {
-            callback();
-            return;
-        }
+        return fetch(url)
+        .then(resp => {
+            console.log("Status code: " + resp.status);
+            return resp.text();
+        })
+        .then(body => {
+            let reqTime = new Date().getTime() - start;
 
-        if (body) {
             console.log(`Bytes loaded ${body.length}`.bgYellow);
-            //return;
-            let reqTime = new Date().getTime() - before;
-            infoObj.time = reqTime;
-            //**************QUESTION*********************
-            let count = encodeURIComponent(body).length;
-            infoObj.size = body.length;
             console.log('REQUEST TIME'.bgRed);
-            console.log(before);
+            console.log(start);
             console.log(reqTime.toString().bgGreen);
-            PubSub.emit('live-table', infoObj);
-            pagesVisited.push(infoObj);
-        }
 
-        // Parse the document body
-        var $ = cheerio.load(body);
-        collectInternalLinks($);
-        callback();
+            return {
+                url,
+                time: reqTime,
+                body,
+                size: body.length,
+            };
+        })
+        .catch(err => {
+            console.log(error);
+            console.log("Status code: " + resp.status);
+            console.log(`An error has occurred \n code: ${error.code}`);
+        });
+    }
 
-    });
+    getInternalLinks(baseUrl, $) {
+        let relativeLinks = 0;
+        const absoluteBase = new RegExp('^' + baseUrl);
+        const relative = new RegExp('^\/');
+
+        const links = $("a")
+            .map((i, el) =>
+                $(el).attr('href'))
+            .filter((i, href) =>
+                href && href.search(/javascript:void\(0\)/) === -1 &&
+                (absoluteBase.test(href) || relative.test(href)))
+            .map((i, href) => {
+                relativeLinks++;
+                return relative.test(href) ? baseUrl + href : href;
+            }).toArray();
+
+        console.log(`Found ${relativeLinks} relative links on page ${baseUrl}`.bgCyan);
+
+        return links;
+    }
+
+    stop() {
+        console.log('All pages have been crawled'.bgGreen);
+        console.log('Pages visited'.bgGreen);
+        console.log(`Total of visited pages ${this.pagesToVisit.length}`.bgCyan);
+        console.log('Starting stats collection...');
+
+        PubSub.emit('data-received', this.pagesToVisit);
+        this.pagesToVisit = [];
+    }
 }
 
-function collectInternalLinks($) {
-    // var relativeLinks = $("a[href^='/']");
-    const allLinks = $("a");
-    const relativeLinks = [];
-    const absoluteBase = new RegExp('^' + baseUrl);
-    const relative = new RegExp('^\/');
-    allLinks.each(function () {
-        if ($(this).attr('href')) {
-            if ($(this).attr('href').search(/javascript:void\(0\)/) != -1) {
-                return;
-            }
-
-            if (absoluteBase.test($(this).attr('href'))) {
-                relativeLinks.push($(this).attr('href'));
-                pagesToVisit.push($(this).attr('href'));
-            }
-
-            if (relative.test($(this).attr('href'))) {
-                relativeLinks.push(baseUrl + $(this).attr('href'));
-                pagesToVisit.push(baseUrl + $(this).attr('href'));
-            }
-
-        }
-
-
-    });
-
-
-    console.log(`Found ${relativeLinks.length} relative links on page`.bgCyan);
-}
-
-module.exports = crawl;
+module.exports = Crawler;
